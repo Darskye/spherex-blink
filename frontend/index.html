@@ -1,0 +1,316 @@
+<!doctype html>
+<!-- SPHEREx Blink. NASA Space Apps Challenge 2026, "Planet X and SPHEREx".
+     Developed with AI assistance (Claude, Anthropic). See README "Use of AI". -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPHEREx Blink</title>
+  <meta name="description" content="Watch the infrared sky change. Enter any sky position and blink SPHEREx images taken months apart to spot things that move or vary.">
+  <meta name="generator" content="Built with AI assistance (Claude, Anthropic)">
+  <meta property="og:title" content="SPHEREx Blink: watch the infrared sky change">
+  <meta property="og:description" content="Blink NASA SPHEREx images taken months apart. Cold objects glow red; anything that moved jumps.">
+  <meta name="theme-color" content="#06070b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2306070b'/%3E%3Ccircle cx='11' cy='19' r='4.5' fill='%23ff7a3d' opacity='.45'/%3E%3Ccircle cx='21' cy='13' r='4.5' fill='%23ff7a3d'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="./" aria-label="SPHEREx Blink home">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <defs>
+          <linearGradient id="brand-g" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#ff5a36"/><stop offset="1" stop-color="#ffb84d"/>
+          </linearGradient>
+        </defs>
+        <circle cx="20" cy="20" r="18.5" fill="none" stroke="url(#brand-g)" stroke-width="1.5" opacity=".5"/>
+        <circle cx="14" cy="23" r="4.5" fill="url(#brand-g)" opacity=".4"/>
+        <circle cx="25" cy="16" r="4.5" fill="url(#brand-g)"/>
+        <path d="M17.6 20.9l4-2.6" stroke="url(#brand-g)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1 3"/>
+      </svg>
+      <span>
+        <span class="brand-name">SPHEREx Blink</span>
+        <span class="tagline">Watch the infrared sky change</span>
+      </span>
+    </a>
+    <form class="search" id="search-form" autocomplete="off">
+      <label class="sr-only" for="search-input">Sky position or object name</label>
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="search-input" type="text" spellcheck="false"
+             placeholder="Coordinates or a name: 269.4463 4.7682 · 08h55m10.8s -07d14m42.5s · Barnard's Star">
+      <label class="sr-only" for="fov-select">Field of view</label>
+      <select id="fov-select" title="Field of view. Larger fields take longer to load."></select>
+      <button type="submit" class="primary">View</button>
+    </form>
+  </header>
+
+  <nav class="gallery" id="examples" aria-label="Example targets"></nav>
+
+  <main class="layout" id="layout">
+    <section class="card target-card" id="target-card" aria-label="Current target">
+      <h1 id="target-name">Pick a place in the sky</h1>
+      <p id="target-coords" class="mono muted">Enter coordinates above, or try one of the examples.</p>
+      <div class="notice" id="notice" role="status" hidden>
+        <span id="notice-text"></span>
+        <button type="button" id="notice-action" hidden></button>
+        <button type="button" class="ghost" id="notice-close" aria-label="Dismiss">×</button>
+      </div>
+    </section>
+
+    <section class="card viewer-card" aria-label="Image viewer">
+      <div class="stage-wrap" id="stage-wrap">
+        <div class="stage" id="stage">
+          <canvas id="image" aria-label="SPHEREx image of the selected field"></canvas>
+          <canvas id="overlay"></canvas>
+          <div class="hud hud-stamp" id="hud-stamp" hidden>
+            <div class="stamp-main" id="stamp-main"></div>
+            <div class="stamp-sub" id="stamp-sub"></div>
+          </div>
+          <div class="hud sim-badge" id="sim-badge" hidden>Simulation · not an observation</div>
+          <div class="hud hud-zoom" id="hud-zoom" hidden>
+            <button type="button" id="btn-fullscreen" title="Fill the screen (F)" aria-label="Full screen">
+              <svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" id="btn-zoom-in" title="Zoom in (double-click the image, or Ctrl + scroll)" aria-label="Zoom in">+</button>
+            <button type="button" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+            <button type="button" id="btn-zoom-reset" title="Show the whole field (0)" aria-label="Reset zoom">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div class="stage-msg" id="stage-msg">
+            <div class="stage-msg-inner" id="stage-msg-inner">
+              <p class="stage-title">Blink the sky like the astronomers who found Pluto.</p>
+              <p>SPHEREx photographs the whole sky every six months in 102 infrared colours.
+                 Flip between passes and anything that moved or changed jumps out.</p>
+            </div>
+          </div>
+          <div class="hover-readout mono" id="hover-readout" hidden></div>
+
+          <div class="transport" id="transport" hidden>
+            <button id="btn-play" class="play" title="Play or pause (space)" aria-label="Play">
+              <svg viewBox="0 0 24 24" id="icon-play"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 24 24" id="icon-pause" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>
+            </button>
+            <div class="blinkbar" id="blinkbar">
+              <button id="btn-prev" class="icon" title="Previous frame (left arrow)" aria-label="Previous frame">
+                <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button id="btn-next" class="icon" title="Next frame (right arrow)" aria-label="Next frame">
+                <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="timeline" id="timeline" role="group" aria-label="Frames"></div>
+              <label class="inline">
+                <span class="sr-only">Speed</span>
+                <select id="speed-select" title="Blink speed">
+                  <option value="1600">Slow</option>
+                  <option value="800" selected>Medium</option>
+                  <option value="400">Fast</option>
+                  <option value="180">Very fast</option>
+                </select>
+              </label>
+            </div>
+            <div class="simbar" id="simbar" hidden>
+              <button type="button" id="btn-sim-now" title="Back to today">Today</button>
+              <input type="range" id="sim-slider" min="-1000" max="1000" step="1" value="0" aria-label="Simulated year">
+              <label class="inline">
+                <span class="sr-only">Time span</span>
+                <select id="sim-span" title="How far to run the simulation">
+                  <option value="100">± 100 years</option>
+                  <option value="1000" selected>± 1,000 years</option>
+                  <option value="10000">± 10,000 years</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress" id="progress" hidden>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <span class="progress-text" id="progress-text"></span>
+      </div>
+      <p class="caption" id="caption"></p>
+    </section>
+
+    <aside class="card controls" id="controls" aria-label="View controls">
+      <div class="control keep">
+        <div class="control-label">View <span class="muted" id="band-caption"></span></div>
+        <div class="segmented bands" id="band-buttons" role="group" aria-label="Infrared band"></div>
+        <p class="hint" id="band-hint"></p>
+      </div>
+
+      <div class="control keep">
+        <div class="control-label">Show</div>
+        <div class="segmented" id="mode-buttons" role="group" aria-label="Display mode">
+          <button data-mode="blink" title="Flip between frames">Blink</button>
+          <button data-mode="diff" title="Subtract the first frame: things that did not change disappear">Difference</button>
+          <button data-mode="sum" title="Add all frames together for the deepest image">Sum</button>
+          <button data-mode="sim" title="Run the clock forward or back: every star moves along its measured motion">Simulate</button>
+        </div>
+        <p class="hint" id="mode-hint"></p>
+      </div>
+
+      <div class="control">
+        <label class="switch" title="Adds an image of the same field from NASA's WISE mission, taken in 2010. Over 15 years, nearby objects move by arcminutes.">
+          <input type="checkbox" id="wise-toggle">
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text"><strong>Compare with 2010</strong><small>Add a WISE mission image: a 15-year baseline</small></span>
+        </label>
+        <label class="switch" title="Gaia DR3 stars, moved to the date of each frame using their measured motion">
+          <input type="checkbox" id="gaia-toggle" checked>
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text"><strong>Known objects</strong><small>Circles: Gaia stars. Diamonds: other infrared catalogue sources</small></span>
+        </label>
+        <label class="switch" title="Names and types of catalogued objects from SIMBAD, placed where each object is on the date of the frame">
+          <input type="checkbox" id="names-toggle" checked>
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text"><strong>Names</strong><small>Label what astronomers have already identified</small></span>
+        </label>
+      </div>
+
+      <details class="control fine" id="fine-tune">
+        <summary>Fine-tune</summary>
+        <div class="fine-body">
+          <div class="control-label">Frames</div>
+          <div class="segmented" id="kind-buttons" role="group" aria-label="Frame type">
+            <button data-kind="epochs" title="One combined image per survey pass. Best for slow movers and faint objects.">Survey passes</button>
+            <button data-kind="exposures" title="Every individual exposure in time order. Best for asteroids, comets and flares.">Every exposure</button>
+          </div>
+
+          <div class="control-label">Brightness</div>
+          <label class="slider">Black
+            <input type="range" id="black-slider" min="0" max="100" step="1" value="35">
+          </label>
+          <label class="slider">White
+            <input type="range" id="white-slider" min="0" max="100" step="1" value="38">
+          </label>
+
+          <div class="toggles column">
+            <label title="Where the named target should be on the date of each frame"><input type="checkbox" id="track-toggle" checked> Predicted target position</label>
+            <label title="Scale each frame so ordinary stars keep the same brightness. Each pass samples slightly different wavelengths, which otherwise makes every star flicker."><input type="checkbox" id="match-toggle" checked> Match star brightness between frames</label>
+            <label title="Pixels the SPHEREx pipeline flagged as unreliable"><input type="checkbox" id="flags-toggle"> Show flagged pixels</label>
+            <label title="Leave flagged detector pixels out when combining exposures"><input type="checkbox" id="mask-toggle" checked> Ignore flagged pixels when combining</label>
+            <label><input type="checkbox" id="smooth-toggle" checked> Smooth pixels</label>
+            <label><input type="checkbox" id="invert-toggle"> Invert (dark stars on white)</label>
+          </div>
+        </div>
+      </details>
+
+      <div class="control">
+        <div class="row">
+          <button id="btn-copy-link">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Copy link
+          </button>
+          <button id="btn-copy-embed" title="Copy an iframe snippet for another website">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Embed
+          </button>
+        </div>
+      </div>
+
+      <div class="control passes" id="passes-box" hidden>
+        <div class="control-label">Survey passes here</div>
+        <ul id="passes-list" class="passes-list"></ul>
+      </div>
+    </aside>
+
+    <section class="card finder-card" id="finder-card" aria-label="Candidate finder" hidden>
+      <div class="finder-head">
+        <div>
+          <p class="eyebrow">Candidate finder</p>
+          <h2>What moved or changed here?</h2>
+          <p class="muted" id="finder-sub"></p>
+        </div>
+        <div class="finder-tally" id="finder-tally" hidden></div>
+      </div>
+      <ol class="finder-list" id="finder-list"></ol>
+      <ul class="finder-notes" id="finder-notes"></ul>
+      <p class="fineprint" id="finder-method" hidden></p>
+    </section>
+
+    <section class="card source-card" id="source-card" aria-label="Spectrum and light curve">
+      <div class="source-head">
+        <div>
+          <h2>Spectrum and light curve</h2>
+          <p class="muted" id="source-sub">Click any object in the image to measure it at every wavelength and date.</p>
+        </div>
+        <div class="row" id="source-actions" hidden>
+          <button id="btn-table">Show table</button>
+          <button id="btn-csv">Download CSV</button>
+        </div>
+      </div>
+      <div class="identity" id="identity" hidden>
+        <div class="identity-head">
+          <span class="identity-eyebrow">What is it?</span>
+          <span class="identity-name" id="identity-name"></span>
+          <span class="identity-kind" id="identity-kind"></span>
+        </div>
+        <ul class="identity-list" id="identity-list"></ul>
+        <p class="identity-note" id="identity-note"></p>
+      </div>
+      <div class="stats" id="source-stats" hidden></div>
+      <div class="charts" id="charts" hidden>
+        <figure class="chart">
+          <figcaption>
+            <span class="chart-title">Spectrum</span>
+            <span class="muted">Brightness at each wavelength; every dot is one exposure</span>
+          </figcaption>
+          <div class="legend" id="spectrum-legend"></div>
+          <div class="plot" id="spectrum-plot"></div>
+        </figure>
+        <figure class="chart">
+          <figcaption>
+            <span class="chart-title">Light curve</span>
+            <span class="muted" id="lc-sub">Brightness over time in each band, relative to that band's average</span>
+          </figcaption>
+          <div class="legend" id="lc-legend"></div>
+          <div class="plot" id="lc-plot"></div>
+        </figure>
+      </div>
+      <div class="table-wrap" id="table-wrap" hidden></div>
+      <p class="fineprint" id="source-method" hidden></p>
+    </section>
+
+    <section class="card guide" id="guide" aria-label="How to read the images">
+      <h2>What to look for</h2>
+      <div class="guide-grid">
+        <div class="guide-item">
+          <span class="guide-icon mover" aria-hidden="true"></span>
+          <h3>Something that hops</h3>
+          <p>Stars far away stay put. A nearby star, brown dwarf or asteroid shifts between passes. In Difference view it leaves a dark spot where it was and a bright one where it went.</p>
+        </div>
+        <div class="guide-item">
+          <span class="guide-icon cold" aria-hidden="true"></span>
+          <h3>Something red</h3>
+          <p>In Colour view ordinary stars are white. Red means bright only at the longest wavelengths, the mark of a cold object such as a brown dwarf or a distant planet.</p>
+        </div>
+        <div class="guide-item">
+          <span class="guide-icon variable" aria-hidden="true"></span>
+          <h3>Something that flickers</h3>
+          <p>A star that brightens or fades between passes while its neighbours hold steady is variable. Click it to see how much, and at which wavelengths.</p>
+        </div>
+        <div class="guide-item">
+          <span class="guide-icon known" aria-hidden="true"></span>
+          <h3>Is it already known?</h3>
+          <p>Circles mark Gaia stars, diamonds mark other infrared catalogue sources, and names come from SIMBAD. Click any dot to see everything four catalogues list there. "Nothing catalogued" means check further, not that it is new.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" id="footer">
+    <p>Images: NASA SPHEREx and WISE missions, served by the NASA/IPAC Infrared Science Archive (IRSA).
+       Star positions: ESA Gaia DR3. Name lookup: SIMBAD via CDS Sesame.
+       Measurements here are quick-look values for exploration, not calibrated science products.</p>
+    <p>A 2026 NASA Space Apps Challenge project for “Planet X and SPHEREx”. Built with AI assistance (Claude); see the project README.
+       Not affiliated with or endorsed by NASA.</p>
+  </footer>
+
+  <div class="tooltip" id="tooltip" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

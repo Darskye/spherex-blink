@@ -1,0 +1,9 @@
+.venv
+.git
+cache
+out
+tests
+**/__pycache__
+*.pyc
+.pytest_cache
+scan_results

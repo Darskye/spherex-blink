@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+cache/
+out/
+.env
+scan_results/
+
+# working draft of the submission form text
+submission/project-page.md
