@@ -2,6 +2,8 @@
 
 **Watch the infrared sky change.** Enter any sky position and blink NASA SPHEREx images taken months apart, so anything that moved or changed jumps out. In false colour, ordinary stars are white and cold objects glow red. Click any object to get its 102-colour infrared spectrum and its brightness over time, measured on the spot.
 
+**Try it: https://spherex-blink.azurewebsites.net** (free hosting: the first page after a quiet spell can take a minute or two to wake, and the site rests when a daily allowance runs out; see "Deploy").
+
 Built for the 2026 NASA Space Apps Challenge, **"Planet X and SPHEREx"**, by team The Celestials (Columbus, GA). A seven-slide demo is in [`submission/SPHEREx-Blink-demo.pdf`](submission/SPHEREx-Blink-demo.pdf).
 
 ## What it does
@@ -132,7 +134,7 @@ Open http://localhost:8765. Then, optionally:
 .venv/Scripts/python scripts/validate_flux.py      # compare star brightnesses with 2MASS and WISE
 .venv/Scripts/python scripts/scan.py --examples    # candidate finder on the five challenge targets (the blind test above)
 .venv/Scripts/python scripts/scan.py --random 40   # ... on 40 random fields; see --help for names, files and options
-.venv/Scripts/python -m pytest                     # 49 offline tests
+.venv/Scripts/python -m pytest                     # 50 offline tests
 SPX_LIVE=1 .venv/Scripts/python -m pytest -m live  # end-to-end test against NASA's archive
 ```
 
@@ -149,7 +151,9 @@ docker run -p 8000:8000 -v spherex-cache:/data spherex-blink
 
 Works on any host that runs a container or a Python web app (Azure App Service, Hugging Face Spaces, Render, Fly.io). Give it persistent storage at `SPX_CACHE_DIR` (default `/data/cache` in the container) so cached cutouts survive restarts, and run `scripts/prewarm.py` once after deploying. The first view of a new position shows a first image in under 10 s, a complete band in roughly 15–30 s, and all six bands (needed for colour) in one to three minutes, limited by the archive. Positions seen before, including everything `prewarm.py` covers, open in one to two seconds.
 
-Settings (environment variables): `SPX_CACHE_DIR`, `SPX_FETCH_CONCURRENCY` (default 6), `SPX_MAX_PER_BAND` (default 60 exposures per detector), `SPX_STACK_CACHE_MB` (default 600).
+**The live site** runs on Azure App Service's free tier: Python 3.14, the start command above without Docker (`python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000`), the cache at `/home/spx-cache`, `SPX_DISK_CACHE_MB=700` and `SPX_STACK_CACHE_MB=200`. The cache for the five examples was uploaded once from a development machine instead of running `prewarm.py` on the server. That tier's limits, read from the plan on 15 Nov 2026: 60 minutes of processor time and 165 MB of outbound data a day, 1 GB of disk, no always-on (the first page after a quiet spell takes a minute or two), and the site is switched off for the rest of the hour after 15 restarts. If the site says it is stopped or disabled, an allowance has run out and it will come back by itself; the tool also runs locally with the three commands under "Run it".
+
+Settings (environment variables): `SPX_CACHE_DIR`, `SPX_FETCH_CONCURRENCY` (default 6), `SPX_MAX_PER_BAND` (default 60 exposures per detector), `SPX_STACK_CACHE_MB` (default 600), `SPX_DISK_CACHE_MB` (default 0, no limit: on a host with a small disk, stop storing cutouts and views once the cache folder reaches this size; the viewer keeps working from memory).
 
 ## API
 

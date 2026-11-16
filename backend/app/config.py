@@ -117,6 +117,12 @@ DEFAULT_FLAG_DESCRIPTIONS = {
 STACK_CACHE_MAX_BYTES = int(os.environ.get("SPX_STACK_CACHE_MB", "600")) * 1024 * 1024
 FRAME_CACHE_MAX_ITEMS = 48
 
+# --- Disk limit --------------------------------------------------------------
+# For hosts with a small disk: stop writing cutouts and frame payloads once the
+# cache folder reaches this size. 0 means no limit.
+DISK_CACHE_MAX_BYTES = int(os.environ.get("SPX_DISK_CACHE_MB", "0")) * 1024 * 1024
+DISK_CHECK_INTERVAL_S = 300.0     # measuring the folder is slow on network disks, so do it rarely
+
 # --- External catalogs -------------------------------------------------------
 SESAME_URL = "https://cds.unistra.fr/cgi-bin/nph-sesame/-oxp/SNV"
 GAIA_TAP_URL = "https://gea.esac.esa.int/tap-server/tap/sync"

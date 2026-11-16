@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import collections
+import contextlib
 import json
 import logging
 import time
@@ -23,7 +24,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from . import config, discovery, fetch, wavecal
+from . import config, discovery, diskbudget, fetch, wavecal
 from .discovery import Exposure
 
 log = logging.getLogger("spx.stack")
@@ -93,24 +94,31 @@ def _cutout_dir(key: str) -> Path:
 
 
 def _save_cutout(key: str, exp: Exposure, cut: fetch.RawCutout) -> None:
+    """Keep a cutout for next time. Best effort: a full or read-only disk must not lose the exposure."""
+    if not diskbudget.has_room():
+        return
     folder = _cutout_dir(key)
-    folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{exp.key}.npz"
     tmp = folder / f"{exp.key}.tmp.npz"
-    np.savez_compressed(
-        tmp,
-        sci=cut.sci,
-        variance=cut.variance,
-        flags=cut.flags,
-        header=np.array(cut.header.tostring()),
-        meta=np.array(json.dumps({
-            "zodi_median": cut.zodi_median,
-            "calib_id": cut.calib_id,
-            "flag_bits": cut.flag_bits,
-            "flag_descriptions": cut.flag_descriptions,
-        })),
-    )
-    tmp.replace(path)
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            tmp,
+            sci=cut.sci,
+            variance=cut.variance,
+            flags=cut.flags,
+            header=np.array(cut.header.tostring()),
+            meta=np.array(json.dumps({
+                "zodi_median": cut.zodi_median,
+                "calib_id": cut.calib_id,
+                "flag_bits": cut.flag_bits,
+                "flag_descriptions": cut.flag_descriptions,
+            })),
+        )
+        tmp.replace(path)
+    except OSError as err:
+        log.warning("could not store cutout %s: %s", path, err)
+        tmp.unlink(missing_ok=True)
 
 
 def _load_cutout(key: str, exp: Exposure) -> fetch.RawCutout | None:
@@ -149,10 +157,13 @@ def _read_json(path: Path, ttl_s: float | None):
 
 
 def _write_json(path: Path, payload) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(payload), "utf-8")
-    tmp.replace(path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload), "utf-8")
+        tmp.replace(path)
+    except OSError as err:              # a full or read-only disk must not break the request
+        log.warning("could not store %s: %s", path, err)
 
 
 # --------------------------------------------------------------------------- jobs
@@ -440,8 +451,9 @@ class StackManager:
                 except fetch.CutoutUnavailable as err:
                     if "gave up" not in str(err):          # permanent (e.g. off-detector): remember it
                         path = _miss_path(job.key, exp)
-                        path.parent.mkdir(parents=True, exist_ok=True)
-                        path.write_text(str(err), "utf-8")
+                        with contextlib.suppress(OSError):
+                            path.parent.mkdir(parents=True, exist_ok=True)
+                            path.write_text(str(err), "utf-8")
                     raise
                 await asyncio.to_thread(_save_cutout, job.key, exp, cut)
                 await self._register(job, exp, cut)

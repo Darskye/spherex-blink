@@ -14,7 +14,7 @@ import hashlib
 import logging
 from collections import OrderedDict
 
-from . import config, process
+from . import config, diskbudget, process
 from .stack import ExposureData, StackJob
 
 log = logging.getLogger("spx.payloads")
@@ -75,6 +75,8 @@ async def frames(job: StackJob, band: str, kind: str, mask: bool, exposures: lis
 
 
 def _store(path, payload: bytes) -> None:
+    if not diskbudget.has_room():
+        return
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")

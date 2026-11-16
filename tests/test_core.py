@@ -598,3 +598,25 @@ def test_slow_archive_does_not_hold_up_a_position_on_record(monkeypatch, tmp_pat
     got = asyncio.run(StackManager()._exposure_list(10.0, 20.0))
     assert [e.key for e in got] == [old[0].key]
     assert time.time() - started < 5
+
+
+# --------------------------------------------------------------------------- disk limit
+
+
+def test_disk_limit_stops_large_cache_writes(tmp_path, monkeypatch):
+    from app import diskbudget
+
+    monkeypatch.setattr(config, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(config, "DISK_CHECK_INTERVAL_S", 0.0)
+    monkeypatch.setattr(diskbudget, "_checked_at", 0.0)
+    monkeypatch.setattr(diskbudget, "_has_room", True)
+
+    monkeypatch.setattr(config, "DISK_CACHE_MAX_BYTES", 0)          # no limit set
+    assert diskbudget.has_room()
+
+    (tmp_path / "cutouts").mkdir()
+    (tmp_path / "cutouts" / "a.npz").write_bytes(b"x" * 4096)
+    monkeypatch.setattr(config, "DISK_CACHE_MAX_BYTES", 8192)       # under the limit
+    assert diskbudget.has_room()
+    monkeypatch.setattr(config, "DISK_CACHE_MAX_BYTES", 1024)       # over the limit
+    assert not diskbudget.has_room()
