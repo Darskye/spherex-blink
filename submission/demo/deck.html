@@ -1,0 +1,225 @@
+<!doctype html>
+<!--
+  SPHEREx Blink: demo deck (7 slides) for the 2026 NASA Space Apps Challenge, "Planet X and SPHEREx".
+  Team The Celestials.
+
+  Made with AI assistance: Claude (Anthropic), through Claude Code, wrote this file under the team's
+  direction. The screenshots in shots/ are captures of the working tool showing real SPHEREx and WISE
+  data; they are not AI-generated. The team logo is AI-generated and is labelled as such.
+
+  To make the PDF: open this file in Edge or Chrome and print to PDF with no margins, or run
+    msedge --headless=new --no-pdf-header-footer --print-to-pdf=SPHEREx-Blink-demo.pdf deck.html
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="generator" content="Written with AI assistance (Claude, Anthropic)">
+<title>SPHEREx Blink: demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: 1920px 1080px; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #05080f; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: 'Inter', system-ui, sans-serif; color: #e9eef7; }
+  .slide { position: relative; width: 1920px; height: 1080px; overflow: hidden; page-break-after: always; break-after: page;
+           background: radial-gradient(1200px 700px at 85% -10%, #1b2440 0%, rgba(27, 36, 64, 0) 60%), #070b14; padding: 84px 96px 0 96px; }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .kicker { font-size: 22px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #ff8a3d; margin: 0 0 18px 0; }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 68px; line-height: 1.08; margin: 0 0 28px 0; letter-spacing: -0.01em; }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 34px; line-height: 1.2; margin: 0 0 10px 0; }
+  p { font-size: 30px; line-height: 1.42; margin: 0 0 20px 0; color: #c9d3e3; }
+  .small { font-size: 22px; line-height: 1.4; color: #93a0b5; }
+  strong { color: #ffffff; font-weight: 600; }
+  .accent { color: #ff8a3d; }
+  .foot { position: absolute; left: 96px; right: 96px; bottom: 34px; display: flex; justify-content: space-between; font-size: 20px; color: #6f7c92; }
+  .crop { position: relative; overflow: hidden; border-radius: 18px; border: 1px solid #2a3650; background: #000; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+  .crop img { position: absolute; display: block; max-width: none; }
+  .cols { display: flex; gap: 64px; }
+  .tile { background: #0f1522; border: 1px solid #243047; border-radius: 18px; padding: 30px 34px; flex: 1; }
+  .tile .big { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 76px; line-height: 1; color: #ffffff; margin-bottom: 12px; }
+  .tile .lab { font-size: 26px; line-height: 1.35; color: #b6c1d4; }
+  .num { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 50%; background: #ff8a3d; color: #1a0f05;
+         font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; flex: none; }
+  .pin { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: #ff8a3d; color: #1a0f05; border: 3px solid #ffffff;
+         font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); }
+  .legend { display: flex; flex-direction: column; gap: 26px; }
+  .legend .row { display: flex; gap: 20px; align-items: flex-start; }
+  .legend .row p { margin: 0; font-size: 27px; line-height: 1.38; }
+  table { border-collapse: collapse; width: 100%; }
+  th { text-align: left; font-size: 20px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #93a0b5; padding: 0 18px 12px 0; border-bottom: 1px solid #2a3650; }
+  td { font-size: 25px; line-height: 1.36; color: #c9d3e3; padding: 15px 18px 15px 0; border-bottom: 1px solid #1c2538; vertical-align: top; }
+  td:first-child { color: #ffffff; font-weight: 600; white-space: nowrap; }
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 8px 0 34px 0; }
+  .flow .box { flex: 1; background: #0f1522; border: 1px solid #243047; border-radius: 18px; padding: 24px 28px; }
+  .flow .box h2 { font-size: 28px; }
+  .flow .box p { font-size: 23px; line-height: 1.38; margin: 0; }
+  .flow .arrow { flex: none; width: 70px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #ff8a3d; }
+  ul { margin: 0; padding: 0; list-style: none; }
+  li { font-size: 27px; line-height: 1.4; color: #c9d3e3; margin: 0 0 16px 0; padding-left: 34px; position: relative; }
+  li::before { content: ""; position: absolute; left: 4px; top: 15px; width: 12px; height: 12px; border-radius: 50%; background: #ff8a3d; }
+</style>
+</head>
+<body>
+
+<!-- 1. Title -->
+<section class="slide" style="padding-top: 0; padding-bottom: 70px; display: flex; flex-direction: column; justify-content: center">
+  <div class="cols" style="align-items: center; gap: 72px">
+    <div style="flex: 1">
+      <p class="kicker">NASA Space Apps Challenge 2026 · Planet X and SPHEREx</p>
+      <h1 style="font-size: 104px; margin-bottom: 20px">SPHEREx Blink</h1>
+      <p style="font-size: 42px; color: #ffffff; margin-bottom: 34px">Watch the infrared sky change.</p>
+      <p>Enter any sky position and blink NASA SPHEREx images taken months apart, so anything that moved or changed stands out.</p>
+      <div style="display: flex; gap: 26px; align-items: center; margin-top: 44px">
+        <div class="crop" style="width: 216px; height: 162px; border-radius: 12px; flex: none"><img src="../team-logo.png" alt="The Celestials team logo" style="left: 0; top: 0; width: 216px"></div>
+        <div>
+          <p style="margin: 0 0 6px 0; color: #ffffff"><strong>Team The Celestials</strong> · Columbus, GA</p>
+          <p style="margin: 0 0 10px 0">Darian Lalla</p>
+          <p class="small" style="margin: 0">Team logo: AI-generated image.</p>
+        </div>
+      </div>
+    </div>
+    <div class="crop" style="width: 800px; height: 670px; flex: none"><img src="shots/epsind.png" alt="The tool showing Epsilon Indi B as a red dot among white stars" style="left: -118px; top: -125px; width: 1312px"></div>
+  </div>
+  <div class="foot"><span>Every screen in this deck is the working tool showing real NASA data. Deck made with AI assistance (Claude).</span><span>1 / 7</span></div>
+</section>
+
+<!-- 2. The problem -->
+<section class="slide" style="padding-top: 170px">
+  <p class="kicker">The challenge</p>
+  <h1>A billion objects. Nobody can look at them all.</h1>
+  <p style="max-width: 1500px">NASA's SPHEREx telescope maps the whole sky every six months. Stars that are close to us drift between one map and the next, and some objects brighten or fade. They only show up when you compare the same patch of sky at different times.</p>
+  <div class="cols" style="gap: 32px; margin: 40px 0 44px 0">
+    <div class="tile"><div class="big">102</div><div class="lab">colours of infrared light in every map</div></div>
+    <div class="tile"><div class="big">6 months</div><div class="lab">between one map of the whole sky and the next</div></div>
+    <div class="tile"><div class="big">1 billion+</div><div class="lab">objects imaged, far too many for any one person</div></div>
+  </div>
+  <p style="max-width: 1500px"><strong>The ask:</strong> a public web tool where anyone enters a sky position and sees that patch play like a little video. <span class="accent">That is what we built.</span></p>
+  <div class="foot"><span>SPHEREx Blink · The Celestials</span><span>2 / 7</span></div>
+</section>
+
+<!-- 3. The tool -->
+<section class="slide" style="padding-top: 70px">
+  <p class="kicker">The tool</p>
+  <h1 style="font-size: 56px; margin-bottom: 26px">One page: type a position, watch it change</h1>
+  <div class="cols" style="gap: 48px">
+    <div class="crop" style="width: 1216px; height: 760px; flex: none">
+      <img src="shots/epsind.png" alt="Full view of the tool: search box, example targets, the sky image with a red dot at the centre, and the controls" style="left: 0; top: 0; width: 1216px">
+      <div class="pin" style="left: 560px; top: 9px">1</div>
+      <div class="pin" style="left: 458px; top: 350px">2</div>
+      <div class="pin" style="left: 470px; top: 686px">3</div>
+      <div class="pin" style="left: 822px; top: 454px">4</div>
+    </div>
+    <div class="legend" style="flex: 1; padding-top: 6px">
+      <div class="row"><span class="num">1</span><p><strong>Any position or name.</strong> Coordinates, or a name such as "Barnard's Star". Five challenge targets are one click away.</p></div>
+      <div class="row"><span class="num">2</span><p><strong>Cold objects glow red.</strong> Ordinary stars are white. This red dot is the brown dwarf pair Epsilon Indi B.</p></div>
+      <div class="row"><span class="num">3</span><p><strong>Blink between passes.</strong> Each button is one SPHEREx pass over this spot. Play, step, or change speed.</p></div>
+      <div class="row"><span class="num">4</span><p><strong>More ways to look.</strong> Subtract passes, add them, bring in a 2010 image, or mark the stars already known.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>SPHEREx Blink · The Celestials</span><span>3 / 7</span></div>
+</section>
+
+<!-- 4. User experience -->
+<section class="slide" style="padding-top: 110px">
+  <p class="kicker">How you use it</p>
+  <h1 style="font-size: 56px; margin-bottom: 30px">Three steps, about a minute</h1>
+  <div class="cols" style="gap: 40px">
+    <div style="flex: 1">
+      <div class="crop" style="width: 549px; height: 392px; margin-bottom: 26px"><img src="shots/epsind.png" alt="Search box, example targets and the date of the first survey pass" style="left: -104px; top: -7px; width: 1162px"></div>
+      <div style="display: flex; gap: 18px; align-items: flex-start"><span class="num">1</span><div><h2>Enter a position</h2><p style="font-size: 25px">The tool asks NASA's archive for every SPHEREx image of that spot. Nothing is prepared in advance, so new data appears as soon as NASA releases it.</p></div></div>
+    </div>
+    <div style="flex: 1">
+      <div class="crop" style="width: 549px; height: 392px; margin-bottom: 26px"><img src="shots/epsind.png" alt="The red dot at the centre of the image with an arrow showing its motion, above the timeline of survey passes" style="left: -257px; top: -362px; width: 1246px"></div>
+      <div style="display: flex; gap: 18px; align-items: flex-start"><span class="num">2</span><div><h2>Watch the blink</h2><p style="font-size: 25px">The images are lined up, so fixed stars stay put and anything that moved jumps. The arrow shows where a catalogued star is heading.</p></div></div>
+    </div>
+    <div style="flex: 1">
+      <div class="crop" style="width: 549px; height: 392px; margin-bottom: 26px"><img src="shots/epsind_tall.png" alt="Spectrum chart: brightness against wavelength, one dot per exposure, with peaks near 1.3, 1.6, 2.1 and 4 micrometres" style="left: -133px; top: -1780px; width: 1366px"></div>
+      <div style="display: flex; gap: 18px; align-items: flex-start"><span class="num">3</span><div><h2>Click any object</h2><p style="font-size: 25px">You get its spectrum, its brightness over time, how fast it is moving, and what the catalogues already say about it.</p></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>SPHEREx Blink · The Celestials</span><span>4 / 7</span></div>
+</section>
+
+<!-- 5. Does it work -->
+<section class="slide" style="padding-top: 70px">
+  <p class="kicker">Does it work?</p>
+  <h1 style="font-size: 56px; margin-bottom: 24px">Tested on all five challenge targets</h1>
+  <div class="cols" style="gap: 56px">
+    <div style="flex: 1">
+      <table>
+        <tr><th>Target</th><th>What the tool measured</th><th>Independent check</th></tr>
+        <tr><td>Barnard's Star</td><td>Moves 9.95 ± 0.61 arcseconds a year</td><td>Gaia: 10.39</td></tr>
+        <tr><td>Epsilon Indi B</td><td>Moves about 4.5 ± 0.3 arcseconds a year</td><td>Catalogue: 4.68</td></tr>
+        <tr><td>WISE 0855−0714</td><td>A faint red dot where it was predicted to be. The tool warns that a background star is blended with it and reports no motion.</td><td>Brightness as expected from WISE</td></tr>
+        <tr><td>RW Aurigae</td><td>In one year: about half again as bright at 0.9 µm, 46% fainter at 4 µm</td><td>Known irregular variable</td></tr>
+        <tr><td>R Draconis</td><td>Too bright for SPHEREx, so it is followed through its outer glow: a 45% change in three months</td><td>Known pulsating giant</td></tr>
+      </table>
+      <p class="small" style="margin-top: 22px">Measured from public SPHEREx data, 13 to 15 November 2026. Star brightness agreed with the 2MASS and WISE catalogues to about 2% for nine test stars.</p>
+    </div>
+    <div style="flex: none; width: 560px">
+      <div class="crop" style="width: 560px; height: 560px"><img src="shots/barnard_wise.png" alt="WISE image from 2010 with Barnard's Star at the bottom edge and a long arrow to the marked centre, where it is now" style="left: -160px; top: -113px; width: 1113px"></div>
+      <p class="small" style="margin-top: 16px"><strong>Barnard's Star, 2010 to now.</strong> The bright star at the bottom is where WISE saw it in 2010. The marked spot at the centre is where SPHEREx sees it today.</p>
+    </div>
+  </div>
+  <div class="foot"><span>SPHEREx Blink · The Celestials</span><span>5 / 7</span></div>
+</section>
+
+<!-- 6. Open data -->
+<section class="slide" style="padding-top: 130px">
+  <p class="kicker">Made possible by open data</p>
+  <h1 style="font-size: 56px; margin-bottom: 26px">Everything on screen comes live from public archives</h1>
+  <div class="flow">
+    <div class="box"><h2>Your browser</h2><p>Sends a sky position. Colours, blinks and subtracts the images itself, so the controls respond at once.</p></div>
+    <div class="arrow">→</div>
+    <div class="box"><h2>Our service</h2><p>Python. Finds the exposures, downloads small cut-outs, lines them up, and measures every object.</p></div>
+    <div class="arrow">→</div>
+    <div class="box"><h2>NASA's IRSA archive</h2><p>Holds every SPHEREx image. We read only the part of each file we need, about a twentieth of it.</p></div>
+  </div>
+  <div class="cols" style="gap: 56px">
+    <ul style="flex: 1">
+      <li><strong>SPHEREx spectral images</strong> (NASA, at IRSA): the pictures, and the spectra. Each exposure sees an object at a different wavelength, so measuring every exposure gives its spectrum.</li>
+      <li><strong>WISE images from 2010</strong> (NASA): added to the blink, they stretch one year of SPHEREx into a 15-year baseline.</li>
+    </ul>
+    <ul style="flex: 1">
+      <li><strong>Gaia DR3</strong> (European Space Agency): the stars already known and how they move, drawn where they were on each image's date.</li>
+      <li><strong>2MASS and AllWISE catalogues</strong> (NASA) and <strong>SIMBAD</strong> (CDS, Strasbourg): names, and a check on our brightness measurements.</li>
+    </ul>
+  </div>
+  <div class="foot"><span>SPHEREx Blink · The Celestials</span><span>6 / 7</span></div>
+</section>
+
+<!-- 7. Candidate finder and links -->
+<section class="slide" style="padding-top: 70px">
+  <p class="kicker">Beyond the brief</p>
+  <h1 style="font-size: 56px; margin-bottom: 26px">It also looks for candidates by itself</h1>
+  <div class="cols" style="gap: 56px">
+    <div style="flex: 1">
+      <p style="font-size: 28px">Pluto was found by blinking two images. The tool does the same by measurement: it measures every object in every pass, flags what moved or changed, and only then asks the catalogues what is already known.</p>
+      <ul>
+        <li><strong>Blind test:</strong> it flagged all five challenge targets, and nothing else in their fields.</li>
+        <li><strong>100 random fields:</strong> 3,869 objects measured, 147 first-look flags, 146 rejected by its own checks. The one left is a known quasar at half its 2010 brightness.</li>
+        <li><strong>Nothing new was found, and we say so.</strong> Findings are candidates for a person to look at, not discoveries.</li>
+      </ul>
+    </div>
+    <div style="flex: none; width: 820px">
+      <div class="crop" style="width: 820px; height: 428px"><img src="shots/epsind_tall.png" alt="Candidate finder panel: one finding, moved 4.6 arcseconds per year, already known as the brown dwarf Epsilon Indi B" style="left: -177px; top: -1449px; width: 1968px"></div>
+      <div class="tile" style="margin-top: 28px; padding: 24px 30px">
+        <p style="font-size: 25px; margin: 0 0 10px 0"><strong>Code and documentation</strong></p>
+        <p style="font-size: 29px; margin: 0 0 14px 0; color: #ff8a3d">github.com/Darskye/spherex-blink</p>
+        <p class="small" style="margin: 0">Team The Celestials: Darian Lalla. Built with AI assistance (Claude); the README says where and how. Not affiliated with or endorsed by NASA.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>SPHEREx Blink · The Celestials · NASA Space Apps Challenge 2026</span><span>7 / 7</span></div>
+</section>
+
+<script>
+  // Preview aid: deck.html?show=1-3 keeps only those slides, for checking a few at a time.
+  const show = new URLSearchParams(location.search).get("show");
+  if (show) {
+    const [a, b] = show.split("-").map(Number);
+    document.querySelectorAll(".slide").forEach((s, i) => { if (i + 1 < a || i + 1 > (b || a)) s.remove(); });
+  }
+</script>
+</body>
+</html>

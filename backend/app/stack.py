@@ -289,6 +289,7 @@ class StackManager:
         self.semaphore = asyncio.Semaphore(config.FETCH_CONCURRENCY)
         self.throttle = fetch.Throttle()
         self._wave_locks: dict[int, asyncio.Lock] = {}
+        self._archive_failed_at = 0.0           # when the archive last failed to give a complete exposure list
 
     async def start(self) -> None:
         limits = httpx.Limits(max_connections=config.FETCH_CONCURRENCY + 6, max_keepalive_connections=config.FETCH_CONCURRENCY)
@@ -335,13 +336,31 @@ class StackManager:
         cached = _read_json(path, config.EXPOSURE_LIST_TTL_S)
         if cached is not None:
             return [Exposure.from_dict(d) for d in cached]
+        stale = _read_json(path, None)          # older than the refresh interval, but still what we knew
+        known = [Exposure.from_dict(d) for d in stale] if stale is not None else None
+        # The archive failed a moment ago and this position is on record: do not make the visitor wait again.
+        if known is not None and time.time() - self._archive_failed_at < config.ARCHIVE_RETRY_AFTER_S:
+            return known
         try:
-            exposures = await discovery.search_exposures(self.client, ra, dec)
-        except Exception:
-            stale = _read_json(path, None)      # archive unreachable: fall back to what we knew
-            if stale is not None:
+            search = discovery.search_exposures(self.client, ra, dec)
+            # With a list on record, a slow archive must not hold up a view that can already be drawn.
+            exposures = await (asyncio.wait_for(search, config.SEARCH_PATIENCE_S) if known is not None else search)
+        except discovery.PartialSearch as partial:
+            # One collection answered and another did not. That must never shrink the list:
+            # keep every exposure on record, add any new ones, and store nothing, so the
+            # archive is asked again next time.
+            self._archive_failed_at = time.time()
+            merged = {e.key: e for e in (known or [])}
+            for exp in partial.exposures:
+                merged.setdefault(exp.key, exp)
+            log.warning("archive search answered only in part for %s %s; keeping the %d exposures on record",
+                        ra, dec, len(known or []))
+            return sorted(merged.values(), key=lambda e: (e.mjd, e.detector))
+        except Exception:                       # archive unreachable or too slow: fall back to what we knew
+            self._archive_failed_at = time.time()
+            if known is not None:
                 log.warning("archive search failed; using stale exposure list for %s %s", ra, dec)
-                return [Exposure.from_dict(d) for d in stale]
+                return known
             raise
         _write_json(path, [e.to_dict() for e in exposures])
         return exposures

@@ -24,6 +24,8 @@ SIA_COLLECTIONS = (
 )
 SIA_RADIUS_DEG = 0.0003          # ~1 arcsec: "images whose footprint contains the point"
 EXPOSURE_LIST_TTL_S = 6 * 3600   # re-ask the archive for new exposures every 6 h
+SEARCH_PATIENCE_S = 12.0         # with a list already on record, wait this long for a fresh one, then use the old
+ARCHIVE_RETRY_AFTER_S = 300.0    # after a failed search, use lists on record for this long before asking again
 
 USER_AGENT = "spherex-blink/1.0 (NASA Space Apps 2026 project; astronomy viewer)"
 

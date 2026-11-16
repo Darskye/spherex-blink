@@ -99,8 +99,24 @@ async def _query_collection(client: httpx.AsyncClient, collection: str, ra: floa
     raise RuntimeError(f"IRSA image search failed for {collection}: {last_err}")
 
 
+class PartialSearch(RuntimeError):
+    """Some collections answered and at least one did not.
+
+    ``exposures`` holds what did arrive. It is not the whole list, so the caller
+    must not let it replace a fuller list it already has.
+    """
+
+    def __init__(self, exposures: list[Exposure], errors: list[Exception]):
+        super().__init__(f"IRSA image search answered only in part: {errors[0]}")
+        self.exposures = exposures
+        self.errors = errors
+
+
 async def search_exposures(client: httpx.AsyncClient, ra: float, dec: float) -> list[Exposure]:
-    """Return every public SPHEREx exposure whose footprint contains (ra, dec)."""
+    """Return every public SPHEREx exposure whose footprint contains (ra, dec).
+
+    Raises ``PartialSearch`` if only some of the collections answered.
+    """
     results = await asyncio.gather(
         *(_query_collection(client, c, ra, dec) for c in config.SIA_COLLECTIONS),
         return_exceptions=True,
@@ -115,7 +131,10 @@ async def search_exposures(client: httpx.AsyncClient, ra: float, dec: float) -> 
             merged.setdefault(exp.key, exp)   # collections are listed in preference order
     if not merged and errors:
         raise errors[0]
-    return sorted(merged.values(), key=lambda e: (e.mjd, e.detector))
+    exposures = sorted(merged.values(), key=lambda e: (e.mjd, e.detector))
+    if errors:
+        raise PartialSearch(exposures, errors)
+    return exposures
 
 
 def cap_exposures(exposures: list[Exposure], max_per_band: int) -> list[Exposure]:

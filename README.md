@@ -2,7 +2,7 @@
 
 **Watch the infrared sky change.** Enter any sky position and blink NASA SPHEREx images taken months apart, so anything that moved or changed jumps out. In false colour, ordinary stars are white and cold objects glow red. Click any object to get its 102-colour infrared spectrum and its brightness over time, measured on the spot.
 
-Built for the 2026 NASA Space Apps Challenge, **"Planet X and SPHEREx"**, by team The Celestials (Columbus, GA).
+Built for the 2026 NASA Space Apps Challenge, **"Planet X and SPHEREx"**, by team The Celestials (Columbus, GA). A seven-slide demo is in [`submission/SPHEREx-Blink-demo.pdf`](submission/SPHEREx-Blink-demo.pdf).
 
 ## What it does
 
@@ -107,6 +107,7 @@ browser ──/api/status──▶ FastAPI ──SIA search──▶ NASA/IPAC I
 - **Finding images**: IRSA's Simple Image Access service (about 1 s; the TAP route took about 15 s).
 - **Fast cutouts**: each cutout file is about 4 MB, of which 3.9 MB is a PSF table the viewer does not need and which comes last. The download stops once the image, flags, variance and zodiacal-light extensions have arrived (about 130–200 kB, depending on field size).
 - **Polite to the archive**: IRSA answers "server busy" on roughly one request in five and sustains about four cutouts per second. The loader uses six connections, backs off together on a busy answer, and retries patiently. One band is fetched first and shown while the rest arrives.
+- **Archive outages**: if the archive does not answer, or only some of its collections answer, the tool keeps the exposure list it already holds for that position, adds anything new that did arrive, and asks again later. With a list on record it waits at most 12 s for a fresh one. (During an outage on 15 Nov 2026 a partial answer had replaced a full list, and Barnard's Star showed one pass instead of three; there is now a test for it.)
 - **Wavelengths**: SPHEREx has a linear variable filter, so wavelength depends on where a source lands on the detector. The per-detector lookup table is interpolated for each exposure (checked against `astropy.wcs`).
 - **Colour**: red = detectors 5+6 (3.8–5.0 µm), green = 3+4 (1.6–3.8 µm), blue = 1+2 (0.75–1.6 µm). Channels are balanced with one vote per star so the typical star is white; colour fades to grey in the noise and on flagged pixels.
 - **Names**: SIMBAD (through its Harvard mirror, then CDS), and the 2MASS and AllWISE catalogues at IRSA, are searched once per field and cached. SIMBAD positions are for the year 2000, so the search reaches 5 arcminutes beyond the field and objects are moved to the frame's date before matching.
@@ -131,7 +132,7 @@ Open http://localhost:8765. Then, optionally:
 .venv/Scripts/python scripts/validate_flux.py      # compare star brightnesses with 2MASS and WISE
 .venv/Scripts/python scripts/scan.py --examples    # candidate finder on the five challenge targets (the blind test above)
 .venv/Scripts/python scripts/scan.py --random 40   # ... on 40 random fields; see --help for names, files and options
-.venv/Scripts/python -m pytest                     # 46 offline tests
+.venv/Scripts/python -m pytest                     # 49 offline tests
 SPX_LIVE=1 .venv/Scripts/python -m pytest -m live  # end-to-end test against NASA's archive
 ```
 
@@ -194,6 +195,7 @@ This project was developed with AI assistance: Claude (Anthropic), used through 
 - **Design**: Claude proposed the architecture and the build plan, and suggested several of the features (false-colour view, the 2010 WISE comparison, following saturated stars through their wings, blend detection from Gaia, the motion fit, and brightness matching between passes), as well as the visual design. The team asked for objects to be named, for a larger viewer, and for a mode that simulates change from the data; Claude designed and built them. The team also asked whether the tool could find anything new, the way Pluto was found; Claude designed and built the candidate finder in answer, and ran the tests reported above. After the first sky scan Claude measured each finding by hand against the WISE catalogues, found that two of the three were mistakes of its own method, added the like-for-like check (step 6), and repeated the tests.
 - **Decisions**: the team chose the challenge and the signature feature (click-to-spectrum and light curve), and approved the plan.
 - **Not AI-generated**: every image the tool shows, including the example thumbnails, is real SPHEREx and WISE data rendered by the tool. No AI-generated video or audio is used, and no NASA logos or mission insignia appear.
+- **Demo deck**: `submission/SPHEREx-Blink-demo.pdf` (source in `submission/demo/`) was written and laid out by Claude under the team's direction. Its screenshots are captures of the working tool, not generated images.
 - **AI-generated image**: the team logo (`submission/team-logo.png`) was drawn by Claude as HTML and CSS to the team's brief. It carries a visible "AI-generated image" mark.
 
 ## Limitations

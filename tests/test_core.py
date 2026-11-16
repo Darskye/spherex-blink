@@ -517,3 +517,84 @@ def test_centre_is_not_dragged_onto_a_brighter_neighbour():
             points.append(point)
     motion = photometry._measured_motion(points)
     assert motion is None or not motion["significant"]
+
+
+# --------------------------------------------------------------------------- archive outages
+
+
+def test_partial_archive_answer_is_reported_as_partial(monkeypatch):
+    """If one collection fails and another answers, the caller is told the list is not whole."""
+    import asyncio
+
+    arrived = Exposure("2026W34_1A_0001_1", 3, "u", 61270.0, 113.6, "spherex_qr3", "")
+
+    async def fake(client, collection, ra, dec):
+        if collection == config.SIA_COLLECTIONS[0]:
+            raise RuntimeError("SIA HTTP 502")
+        return [arrived] if collection == config.SIA_COLLECTIONS[1] else []
+
+    monkeypatch.setattr(discovery, "_query_collection", fake)
+    with pytest.raises(discovery.PartialSearch) as caught:
+        asyncio.run(discovery.search_exposures(None, 10.0, 20.0))
+    assert caught.value.exposures == [arrived]
+
+
+def test_partial_archive_answer_never_shrinks_the_stored_list(monkeypatch, tmp_path):
+    """Regression (15 Nov 2026): during an archive outage one collection answered, and its 119
+    exposures replaced a stored list of 356, so Barnard's Star showed one pass instead of three."""
+    import asyncio
+    import json
+    import os
+    import time
+
+    from app.stack import StackManager, _write_json
+
+    monkeypatch.setattr(config, "CACHE_DIR", tmp_path)
+    old = [Exposure(f"2025W33_2C_{i:04d}_1", 3, "u", 60900.0 + i, 113.6, "spherex_dr1", "") for i in range(5)]
+    new = Exposure("2026W34_1A_0001_1", 3, "u", 61270.0, 113.6, "spherex_qr3", "")
+    path = tmp_path / "exposures" / "10.00000_+20.00000.json"
+    _write_json(path, [e.to_dict() for e in old])
+    long_ago = time.time() - 10 * config.EXPOSURE_LIST_TTL_S
+    os.utime(path, (long_ago, long_ago))
+
+    async def partial(client, ra, dec):
+        raise discovery.PartialSearch([new], [RuntimeError("SIA HTTP 502")])
+
+    monkeypatch.setattr(discovery, "search_exposures", partial)
+    manager = StackManager()
+    got = asyncio.run(manager._exposure_list(10.0, 20.0))
+    assert {e.key for e in got} == {e.key for e in old} | {new.key}
+    assert len(json.loads(path.read_text("utf-8"))) == 5      # the stored list is untouched
+
+    # For the next few minutes the archive is not asked again about a position on record.
+    async def must_not_run(client, ra, dec):
+        raise AssertionError("archive asked again too soon")
+
+    monkeypatch.setattr(discovery, "search_exposures", must_not_run)
+    assert len(asyncio.run(manager._exposure_list(10.0, 20.0))) == 5
+
+
+def test_slow_archive_does_not_hold_up_a_position_on_record(monkeypatch, tmp_path):
+    """With a list on record, the tool waits only briefly for a fresh one."""
+    import asyncio
+    import os
+    import time
+
+    from app.stack import StackManager, _write_json
+
+    monkeypatch.setattr(config, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(config, "SEARCH_PATIENCE_S", 0.05)
+    old = [Exposure("2025W33_2C_0001_1", 3, "u", 60900.0, 113.6, "spherex_dr1", "")]
+    path = tmp_path / "exposures" / "10.00000_+20.00000.json"
+    _write_json(path, [e.to_dict() for e in old])
+    long_ago = time.time() - 10 * config.EXPOSURE_LIST_TTL_S
+    os.utime(path, (long_ago, long_ago))
+
+    async def hangs(client, ra, dec):
+        await asyncio.sleep(30)
+
+    monkeypatch.setattr(discovery, "search_exposures", hangs)
+    started = time.time()
+    got = asyncio.run(StackManager()._exposure_list(10.0, 20.0))
+    assert [e.key for e in got] == [old[0].key]
+    assert time.time() - started < 5
