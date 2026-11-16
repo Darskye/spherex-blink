@@ -620,3 +620,35 @@ def test_disk_limit_stops_large_cache_writes(tmp_path, monkeypatch):
     assert diskbudget.has_room()
     monkeypatch.setattr(config, "DISK_CACHE_MAX_BYTES", 1024)       # over the limit
     assert not diskbudget.has_room()
+
+
+# --------------------------------------------------------------------------- following a clicked star
+
+
+def _star(ra, dec, pmra, pmdec, epoch=2016.0, g=12.0):
+    return {"ra": ra, "dec": dec, "pmra": pmra, "pmdec": pmdec, "epoch": epoch, "g": g}
+
+
+def test_click_on_a_fast_star_is_followed():
+    # A star moving 4.7 arcsec/yr, clicked where it was in the last of four passes.
+    mjds = [60800.0, 60960.0, 61150.0, 61310.0]                    # about 1.4 years
+    star = _star(331.0, -56.8, 4000.0, -2500.0)
+    last_year = discovery.mjd_to_decimal_year(mjds[-1])
+    ra_click, dec_click = resolver.propagate(star["ra"], star["dec"], star["pmra"], star["pmdec"], star["epoch"], last_year)
+
+    followed = photometry.track_for_click([star], ra_click, dec_click, mjds)
+    assert followed is not None
+    ra, dec, motion = followed
+    assert motion["pmra"] == 4000.0 and motion["pmdec"] == -2500.0
+    assert motion["epoch"] == pytest.approx(last_year)
+    assert abs(dec - dec_click) * 3600.0 < 0.1
+    assert abs(ra - ra_click) * 3600.0 * math.cos(math.radians(dec)) < 0.1
+
+
+def test_click_on_a_slow_star_or_empty_sky_is_not_followed():
+    mjds = [60800.0, 60960.0, 61150.0, 61310.0]
+    slow = _star(10.0, 20.0, 12.0, -8.0)
+    assert photometry.track_for_click([slow], 10.0, 20.0, mjds) is None            # barely moves: fixed spot is right
+    fast = _star(10.0, 20.0, 4000.0, 0.0)
+    assert photometry.track_for_click([fast], 10.02, 20.02, mjds) is None          # the click is 100 arcsec from its path
+    assert photometry.track_for_click([], 10.0, 20.0, mjds) is None

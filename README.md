@@ -26,7 +26,7 @@ Beyond the list:
 - **Says what is already known.** Click anything and "What is it?" gives its name and type from SIMBAD (for example "Brown Dwarf, spectral type Y2, moves 8.15″ per year"), with its Gaia, 2MASS and AllWISE entries. Named objects are labelled on the image. If no catalogue has anything at that spot, it says so, which is the first thing to check before calling something new.
 - **Time machine (Simulate).** Runs the clock up to 10,000 years forward or back: every star with a measured motion is lifted out of today's image and redrawn where that motion puts it. It is clearly marked as a simulation, not an observation; stars with no measured motion, and galaxies, stay put.
 - **A large image.** The viewer fills the height of the window, with the controls laid over it like a video player, and can go full screen (F).
-- **Follows moving targets.** A named object's position is propagated from its catalogue epoch to today (Barnard's Star has moved 270″ since 2000), and its spectrum is measured along its track.
+- **Follows moving targets.** A named object's position is propagated from its catalogue epoch to today (Barnard's Star has moved 270″ since 2000), and its spectrum is measured along its track. A click on a fast-moving Gaia star is followed the same way, so the star is not mistaken for its own blended neighbour.
 - **Knows old coordinates when it sees them.** Paste the WISE 0855 coordinates from the challenge statement and it says they are where the object was around 2010, and offers to centre on where it is now.
 - **Measures motion.** The object's position in each pass is fitted for a drift in arcseconds per year.
 - **Honest about what it cannot measure.** Stars too bright for SPHEREx are labelled "Saturated" and followed through their unsaturated outer wings instead; measurements with a known neighbour inside the 6″ pixel are labelled "Blended".
@@ -134,7 +134,7 @@ Open http://localhost:8765. Then, optionally:
 .venv/Scripts/python scripts/validate_flux.py      # compare star brightnesses with 2MASS and WISE
 .venv/Scripts/python scripts/scan.py --examples    # candidate finder on the five challenge targets (the blind test above)
 .venv/Scripts/python scripts/scan.py --random 40   # ... on 40 random fields; see --help for names, files and options
-.venv/Scripts/python -m pytest                     # 50 offline tests
+.venv/Scripts/python -m pytest                     # 52 offline tests
 SPX_LIVE=1 .venv/Scripts/python -m pytest -m live  # end-to-end test against NASA's archive
 ```
 

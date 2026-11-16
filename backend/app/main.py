@@ -200,6 +200,11 @@ async def api_spectrum(
         log.info("no Gaia stars for blend check: %s", err.__class__.__name__)
     complete = job.finished
     exposures = job.band_exposures(None)              # snapshot taken on the event loop
+    if motion is None and stars:
+        # A click on a fast-moving catalogued star: follow the star, not the spot it was clicked at.
+        followed = photometry.track_for_click(stars, sra, sdec, [ed.mjd for ed in exposures])
+        if followed:
+            sra, sdec, motion = followed
     result = await asyncio.to_thread(photometry.extract, job, sra, sdec, exposures, motion, stars)
     result["blend_checked"] = stars is not None
     result["complete"] = complete

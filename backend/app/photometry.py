@@ -43,6 +43,7 @@ POSITION_FLOOR_ARCSEC = 0.3
 BLEND_RADIUS_ARCSEC = 7.0     # a catalogued neighbour this close shares the target's PSF (pixels are 6.15 arcsec)
 BLEND_RADIUS_FAINT_ARCSEC = 12.5   # used when the target is too faint or red to be a Gaia star itself
 SELF_MATCH_ARCSEC = 2.5       # a Gaia star that stays this close in every exposure is the target itself
+AUTO_TRACK_MIN_SHIFT_ARCSEC = 2.0   # a clicked star is followed only if it moves at least this far during the exposures
 WING_WIDTH = 3.0              # native pixels
 METHOD_TEXT = (
     "PSF-weighted forced photometry (Gaussian, per-exposure width), local annulus sky. "
@@ -439,6 +440,38 @@ def _variability(light_curve: list[dict]) -> dict | None:
         if best is None or candidate["significance"] > best["significance"]:
             best = candidate
     return best
+
+
+def track_for_click(stars: list[dict], ra: float, dec: float, mjds: list[float]) -> tuple[float, float, dict] | None:
+    """How to follow the star under a click, if it moves noticeably during these exposures.
+
+    A click marks where a star was in one frame. Measured at that fixed spot, a fast
+    star slides off the aperture in the other passes, and its own catalogue entry is
+    then taken for a blended neighbour. Returns ``(ra, dec, motion)``: the star's
+    catalogue position in the exposure where it passes closest to the click, and its
+    proper motion from that date. None if no such star comes within SELF_MATCH_ARCSEC.
+    """
+    if not stars or len(mjds) < 2:
+        return None
+    years = np.array([discovery.mjd_to_decimal_year(m) for m in mjds], dtype=float)
+    span = float(years.max() - years.min())
+    best = None
+    for s in stars:
+        pmra, pmdec = s.get("pmra"), s.get("pmdec")
+        if pmra is None or pmdec is None:
+            continue
+        if math.hypot(pmra, pmdec) / 1000.0 * span < AUTO_TRACK_MIN_SHIFT_ARCSEC:
+            continue                                   # it never leaves the aperture: a fixed spot is fine
+        dt = years - float(s.get("epoch") or 2016.0)
+        star_dec = s["dec"] + pmdec * dt / 3.6e6
+        star_ra = s["ra"] + pmra * dt / 3.6e6 / max(math.cos(math.radians(s["dec"])), 1e-6)
+        d_ra = ((star_ra - ra + 540.0) % 360.0 - 180.0) * math.cos(math.radians(dec))
+        sep = np.hypot(d_ra, star_dec - dec) * 3600.0
+        i = int(np.argmin(sep))
+        if sep[i] < SELF_MATCH_ARCSEC and (best is None or sep[i] < best[0]):
+            best = (float(sep[i]), float(star_ra[i]) % 360.0, float(star_dec[i]),
+                    {"pmra": float(pmra), "pmdec": float(pmdec), "epoch": float(years[i])})
+    return None if best is None else best[1:]
 
 
 def extract(
